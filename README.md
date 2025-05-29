@@ -1,7 +1,17 @@
+CppGL Framework Mac
+## Changes for macOS Compatibility
+
+To ensure compatibility with macOS, the following adjustments were made:
+
+1. Removed `std++fs` in CMake.
+2. Changed OpenGL version from 4.30 to 4.10 due to macOS limitations.
+3. Disabled compute shader support because of the lower OpenGL version.
+
+```
 CppGL Framework
 =======
 
-OpenGL framework for use in teaching and research with focus on simplicity and reusability.
+An OpenGL framework designed for teaching and research, emphasizing simplicity and reusability.
 
 ## Dependencies
 
@@ -44,3 +54,5 @@ The debug menu can be accessed by pressing ```F1```.
 ## Issues / Suggestions / Feedback
 
 Please mail to <nikolai.hofmann@fau.de>, <laura.fink@fau.de> or <linus.franke@fau.de>.
+
+```
