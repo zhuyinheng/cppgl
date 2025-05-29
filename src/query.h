@@ -4,7 +4,6 @@
 #include <vector>
 #include <cfloat>
 #include <GL/glew.h>
-#include <GL/gl.h>
 #include <chrono>
 #include "named_handle.h"
 #include <algorithm>

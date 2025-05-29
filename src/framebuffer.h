@@ -4,7 +4,6 @@
 #include <vector>
 #include <memory>
 #include <GL/glew.h>
-#include <GL/gl.h>
 #include "named_handle.h"
 #include "texture.h"
 

@@ -32,7 +32,7 @@ Without examples:
 
 With examples:
 
-    cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCPPGL_BUILD_EXAMPLES=ON -Wno-dev && cmake --build build --parallel
+    rm -rf build && cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCPPGL_BUILD_EXAMPLES=ON -Wno-dev -G Ninja && cmake --build build --parallel
 
 ## Examples
 

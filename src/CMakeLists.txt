@@ -18,10 +18,10 @@ target_include_directories(cppgl PRIVATE ../submodules/assimp/include)
 set(OpenGL_GL_PREFERENCE "GLVND")
 find_package(OpenGL REQUIRED)
 target_include_directories(cppgl PUBLIC ${OPENGL_INCLUDE_DIR})
-target_link_libraries(cppgl ${OPENGL_LIBRARIES})
+target_link_libraries(cppgl PUBLIC ${OPENGL_LIBRARIES})
 
-if(UNIX)
-    target_link_libraries(cppgl stdc++fs) # required for std::filesystem
+if(UNIX AND NOT APPLE)
+    target_link_libraries(cppgl PUBLIC stdc++fs) # required for std::filesystem
 endif()
 
-target_link_libraries(cppgl libglew_static glfw assimp)
+target_link_libraries(cppgl PUBLIC libglew_static glfw assimp)

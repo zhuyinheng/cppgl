@@ -4,27 +4,32 @@
 
 CPPGL_NAMESPACE_BEGIN
 
-GeometryImpl::GeometryImpl(const std::string& name) : name(name), bb_min(FLT_MAX), bb_max(FLT_MIN) {}
+GeometryImpl::GeometryImpl(const std::string &name) : name(name), bb_min(FLT_MAX), bb_max(FLT_MIN) {}
 
-GeometryImpl::GeometryImpl(const std::string& name, const aiMesh* mesh_ai) : GeometryImpl(name) {
+GeometryImpl::GeometryImpl(const std::string &name, const aiMesh *mesh_ai) : GeometryImpl(name)
+{
     add(mesh_ai);
 }
 
-GeometryImpl::GeometryImpl(const std::string& name, const std::vector<glm::vec3>& positions, const std::vector<uint32_t>& indices,
-            const std::vector<glm::vec3>& normals, const std::vector<glm::vec2>& texcoords) : GeometryImpl(name) {
+GeometryImpl::GeometryImpl(const std::string &name, const std::vector<glm::vec3> &positions, const std::vector<uint32_t> &indices,
+                           const std::vector<glm::vec3> &normals, const std::vector<glm::vec2> &texcoords) : GeometryImpl(name)
+{
     add(positions, indices, normals, texcoords);
 }
 
 GeometryImpl::~GeometryImpl() {}
 
-void GeometryImpl::add(const aiMesh* mesh_ai) {
+void GeometryImpl::add(const aiMesh *mesh_ai)
+{
     // conversion helper
-    const auto to_glm = [](const aiVector3D& v) { return glm::vec3(v.x, v.y, v.z); };
+    const auto to_glm = [](const aiVector3D &v)
+    { return glm::vec3(v.x, v.y, v.z); };
     // extract vertices, normals and texture coords
     positions.reserve(positions.size() + mesh_ai->mNumVertices);
     normals.reserve(normals.size() + mesh_ai->HasNormals() ? mesh_ai->mNumVertices : 0);
     texcoords.reserve(texcoords.size() + mesh_ai->HasTextureCoords(0) ? mesh_ai->mNumVertices : 0);
-    for (uint32_t i = 0; i < mesh_ai->mNumVertices; ++i) {
+    for (uint32_t i = 0; i < mesh_ai->mNumVertices; ++i)
+    {
         positions.emplace_back(to_glm(mesh_ai->mVertices[i]));
         if (mesh_ai->HasNormals())
             normals.emplace_back(to_glm(mesh_ai->mNormals[i]));
@@ -35,29 +40,35 @@ void GeometryImpl::add(const aiMesh* mesh_ai) {
         bb_max = glm::max(bb_max, to_glm(mesh_ai->mVertices[i]));
     }
     // extract faces
-    indices.reserve(indices.size() + mesh_ai->mNumFaces*3);
-    for (uint32_t i = 0; i < mesh_ai->mNumFaces; ++i) {
+    indices.reserve(indices.size() + mesh_ai->mNumFaces * 3);
+    for (uint32_t i = 0; i < mesh_ai->mNumFaces; ++i)
+    {
         const aiFace &face = mesh_ai->mFaces[i];
-        if (face.mNumIndices == 3) {
+        if (face.mNumIndices == 3)
+        {
             indices.emplace_back(face.mIndices[0]);
             indices.emplace_back(face.mIndices[1]);
             indices.emplace_back(face.mIndices[2]);
-        } else
+        }
+        else
             std::cerr << "WARN: Geometry: skipping non-triangle face!" << std::endl;
     }
 }
 
-void GeometryImpl::add(const GeometryImpl& other) {
+void GeometryImpl::add(const GeometryImpl &other)
+{
     add(other.positions, other.indices, other.normals, other.texcoords);
 }
 
-void GeometryImpl::add(const std::vector<glm::vec3>& positions, const std::vector<uint32_t>& indices,
-        const std::vector<glm::vec3>& normals, const std::vector<glm::vec2>& texcoords) {
+void GeometryImpl::add(const std::vector<glm::vec3> &positions, const std::vector<uint32_t> &indices,
+                       const std::vector<glm::vec3> &normals, const std::vector<glm::vec2> &texcoords)
+{
     // add vertices, normals and texture coords
     this->positions.reserve(this->positions.size() + positions.size());
     this->normals.reserve(this->normals.size() + normals.size());
     this->texcoords.reserve(this->texcoords.size() + texcoords.size());
-    for (uint32_t i = 0; i < positions.size(); ++i) {
+    for (uint32_t i = 0; i < positions.size(); ++i)
+    {
         this->positions.emplace_back(positions[i]);
         if (i < normals.size())
             this->normals.emplace_back(normals[i]);
@@ -73,7 +84,8 @@ void GeometryImpl::add(const std::vector<glm::vec3>& positions, const std::vecto
         this->indices.emplace_back(indices[i]);
 }
 
-void GeometryImpl::clear() {
+void GeometryImpl::clear()
+{
     bb_min = bb_max = glm::vec3(0);
     positions.clear();
     indices.clear();
@@ -81,16 +93,20 @@ void GeometryImpl::clear() {
     texcoords.clear();
 }
 
-void GeometryImpl::recompute_aabb() {
+void GeometryImpl::recompute_aabb()
+{
     bb_min = glm::vec3(FLT_MAX);
-    bb_max = glm::vec3(FLT_MIN);;
-    for (const auto& pos : positions) {
+    bb_max = glm::vec3(FLT_MIN);
+    ;
+    for (const auto &pos : positions)
+    {
         bb_min = glm::min(bb_min, pos);
         bb_max = glm::max(bb_max, pos);
     }
 }
 
-void GeometryImpl::fit_into_aabb(const glm::vec3& aabb_min, const glm::vec3& aabb_max) {
+void GeometryImpl::fit_into_aabb(const glm::vec3 &aabb_min, const glm::vec3 &aabb_max)
+{
     // compute offset to origin and scale factor
     const glm::vec3 center = (bb_min + bb_max) * .5f;
     const glm::vec3 scale_v = (aabb_max - aabb_min) / (bb_max - bb_min);
@@ -100,12 +116,14 @@ void GeometryImpl::fit_into_aabb(const glm::vec3& aabb_min, const glm::vec3& aab
         positions[i] = (positions[i] - center) * scale_f;
 }
 
-void GeometryImpl::translate(const glm::vec3& by) {
+void GeometryImpl::translate(const glm::vec3 &by)
+{
     for (uint32_t i = 0; i < positions.size(); ++i)
         positions[i] += by;
 }
 
-void GeometryImpl::scale(const glm::vec3& by) {
+void GeometryImpl::scale(const glm::vec3 &by)
+{
     // scale positions
     for (uint32_t i = 0; i < positions.size(); ++i)
         positions[i] *= by;
@@ -115,7 +133,8 @@ void GeometryImpl::scale(const glm::vec3& by) {
         normals[i] = glm::normalize(glm::vec3(mat_norm * glm::vec4(normals[i], 0)));
 }
 
-void GeometryImpl::rotate(float angle_degrees, const glm::vec3& axis) {
+void GeometryImpl::rotate(float angle_degrees, const glm::vec3 &axis)
+{
     // rotate positions
     const glm::mat4 rot = glm::rotate(glm::mat4(1), glm::radians(angle_degrees), axis);
     for (uint32_t i = 0; i < positions.size(); ++i)

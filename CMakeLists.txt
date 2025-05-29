@@ -48,9 +48,30 @@ set(CMAKE_LINK_DIRECTORIES_BEFORE ON)
 
 if(UNIX)
     add_compile_options(-pthread -march=native)
-else()
-    add_definitions(-D_USE_MATH_DEFINES)
-    add_definitions(-DNOMINMAX)
+    if(APPLE)
+        # macOS specific OpenGL framework configuration
+        find_library(OPENGL_FRAMEWORK OpenGL REQUIRED)
+        find_library(COCOA_FRAMEWORK Cocoa REQUIRED)
+        find_library(IOKIT_FRAMEWORK IOKit REQUIRED)
+        find_library(COREFOUNDATION_FRAMEWORK CoreFoundation REQUIRED)
+        find_library(QUARTZCORE_FRAMEWORK QuartzCore REQUIRED)
+        
+        include_directories(
+            ${OPENGL_FRAMEWORK}/Headers
+            /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/OpenGL.framework/Headers
+        )
+        
+        add_definitions(-D__APPLE__)
+        # On macOS, filesystem is part of the standard library
+        set(CMAKE_CXX_STANDARD 17)
+        set(CMAKE_CXX_STANDARD_REQUIRED ON)
+        set(CMAKE_CXX_EXTENSIONS OFF)
+    endif()
+endif()
+
+# Link stdc++fs only on Linux
+if(UNIX AND NOT APPLE)
+    target_link_libraries(cppgl PUBLIC stdc++fs)
 endif()
 
 # ---------------------------------------------------------------------
@@ -60,4 +81,15 @@ add_subdirectory(src)
 
 if (CPPGL_BUILD_EXAMPLES)
     add_subdirectory(examples)
+endif()
+
+# macOS framework linking (after cppgl target is defined)
+if(APPLE)
+    target_link_libraries(cppgl PUBLIC
+        ${OPENGL_FRAMEWORK}
+        ${COCOA_FRAMEWORK}
+        ${IOKIT_FRAMEWORK}
+        ${COREFOUNDATION_FRAMEWORK}
+        ${QUARTZCORE_FRAMEWORK}
+    )
 endif()

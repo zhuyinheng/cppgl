@@ -141,3 +141,5 @@ imgui.ini
 
 # Visual Studio cmake and compile 
 out/*
+build/
+.cache/

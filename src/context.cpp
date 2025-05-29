@@ -22,7 +22,8 @@ CPPGL_NAMESPACE_BEGIN
 // -------------------------------------------
 // helper funcs
 
-static void glfw_error_func(int error, const char *description) {
+static void glfw_error_func(int error, const char *description)
+{
     fprintf(stderr, "GLFW: Error %i: %s\n", error, description);
 }
 
@@ -32,10 +33,12 @@ static void (*user_mouse_button_callback)(int button, int action, int mods) = 0;
 static void (*user_mouse_scroll_callback)(double xoffset, double yoffset) = 0;
 static void (*user_resize_callback)(int w, int h) = 0;
 
-static void glfw_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+static void glfw_key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
+{
     if (key == GLFW_KEY_F1 && action == GLFW_PRESS)
         Context::instance().show_gui = !Context::instance().show_gui;
-    if (ImGui::GetIO().WantCaptureKeyboard) {
+    if (ImGui::GetIO().WantCaptureKeyboard)
+    {
         ImGui_ImplGlfw_KeyCallback(window, key, scancode, action, mods);
         return;
     }
@@ -45,14 +48,16 @@ static void glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
         user_keyboard_callback(key, scancode, action, mods);
 }
 
-static void glfw_mouse_callback(GLFWwindow* window, double xpos, double ypos) {
+static void glfw_mouse_callback(GLFWwindow *window, double xpos, double ypos)
+{
     if (ImGui::GetIO().WantCaptureMouse)
         return;
     if (user_mouse_callback)
         user_mouse_callback(xpos, ypos);
 }
 
-static void glfw_mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+static void glfw_mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
+{
     ImGui_ImplGlfw_MouseButtonCallback(window, button, action, mods);
     if (ImGui::GetIO().WantCaptureMouse)
         return;
@@ -60,7 +65,8 @@ static void glfw_mouse_button_callback(GLFWwindow* window, int button, int actio
         user_mouse_button_callback(button, action, mods);
 }
 
-static void glfw_mouse_scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
+static void glfw_mouse_scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
+{
     ImGui_ImplGlfw_ScrollCallback(window, xoffset, yoffset);
     if (ImGui::GetIO().WantCaptureMouse)
         return;
@@ -70,13 +76,15 @@ static void glfw_mouse_scroll_callback(GLFWwindow* window, double xoffset, doubl
         user_mouse_scroll_callback(xoffset, yoffset);
 }
 
-static void glfw_resize_callback(GLFWwindow* window, int w, int h) {
+static void glfw_resize_callback(GLFWwindow *window, int w, int h)
+{
     glViewport(0, 0, w, h);
     if (user_resize_callback)
         user_resize_callback(w, h);
 }
 
-static void glfw_char_callback(GLFWwindow* window, unsigned int c) {
+static void glfw_char_callback(GLFWwindow *window, unsigned int c)
+{
     ImGui_ImplGlfw_CharCallback(window, c);
 }
 
@@ -85,16 +93,26 @@ static void glfw_char_callback(GLFWwindow* window, unsigned int c) {
 
 static ContextParameters parameters;
 
-Context::Context() {
+Context::Context()
+{
     if (!glfwInit())
         throw std::runtime_error("glfwInit failed!");
     glfwSetErrorCallback(glfw_error_func);
 
-    // some GL context settings
+// some GL context settings
+#ifdef __APPLE__
+    // On macOS, we need OpenGL 3.2+ for core profile
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE); // Required for core profile on macOS
+#else
     if (parameters.gl_major > 0)
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, parameters.gl_major);
     if (parameters.gl_minor > 0)
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, parameters.gl_minor);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, parameters.gl_minor);
+#endif
+
     glfwWindowHint(GLFW_RESIZABLE, parameters.resizable);
     glfwWindowHint(GLFW_VISIBLE, parameters.visible);
     glfwWindowHint(GLFW_DECORATED, parameters.decorated);
@@ -104,19 +122,22 @@ Context::Context() {
 
     // create window and context
     glfw_window = glfwCreateWindow(parameters.width, parameters.height, parameters.title.c_str(), 0, 0);
-    if (!glfw_window) {
+    if (!glfw_window)
+    {
         glfwTerminate();
         throw std::runtime_error("glfwCreateContext failed!");
     }
     glfwMakeContextCurrent(glfw_window);
     glfwSwapInterval(parameters.swap_interval);
 
+    // Initialize GLEW first
     glewExperimental = GL_TRUE;
     const GLenum err = glewInit();
-    if (err != GLEW_OK) {
+    if (err != GLEW_OK)
+    {
         glfwDestroyWindow(glfw_window);
         glfwTerminate();
-        throw std::runtime_error(std::string("GLEWInit failed: ") + (const char*)glewGetErrorString(err));
+        throw std::runtime_error(std::string("GLEWInit failed: ") + (const char *)glewGetErrorString(err));
     }
 
     // output configuration
@@ -150,13 +171,14 @@ Context::Context() {
     ImGui_ImplOpenGL3_Init("#version 130");
     // ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     // load custom font?
-    if (fs::exists(parameters.font_ttf_filename)) {
+    if (fs::exists(parameters.font_ttf_filename))
+    {
         ImFontConfig config;
         config.OversampleH = 3;
         config.OversampleV = 3;
         std::cout << "Loading: " << parameters.font_ttf_filename << "..." << std::endl;
         ImGui::GetIO().FontDefault = ImGui::GetIO().Fonts->AddFontFromFileTTF(
-                parameters.font_ttf_filename.string().c_str(), float(parameters.font_size_pixels), &config);
+            parameters.font_ttf_filename.string().c_str(), float(parameters.font_size_pixels), &config);
     }
     ImGui::GetIO().FontGlobalScale = parameters.global_font_scale;
     ImGui_ImplOpenGL3_NewFrame();
@@ -184,7 +206,8 @@ Context::Context() {
     frag_count->begin();
 }
 
-Context::~Context() {
+Context::~Context()
+{
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
@@ -193,22 +216,26 @@ Context::~Context() {
     glfwTerminate();
 }
 
-Context& Context::init(const ContextParameters& params) {
+Context &Context::init(const ContextParameters &params)
+{
     parameters = params;
     // enforce setup of default camera
     current_camera();
     return instance();
 }
 
-Context& Context::instance() {
+Context &Context::instance()
+{
     static Context ctx;
     return ctx;
 }
 
 bool Context::running() { return !glfwWindowShouldClose(instance().glfw_window); }
 
-void Context::swap_buffers() {
-    if (instance().show_gui) gui_draw();
+void Context::swap_buffers()
+{
+    if (instance().show_gui)
+        gui_draw();
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     instance().cpu_timer->end();
@@ -232,7 +259,8 @@ void Context::swap_buffers() {
 
 double Context::frame_time() { return instance().curr_t - instance().last_t; }
 
-void Context::screenshot(const std::filesystem::path& path) {
+void Context::screenshot(const std::filesystem::path &path)
+{
     const glm::ivec2 size = resolution();
     std::vector<uint8_t> pixels(size_t(size.x) * size.y * 3);
     // glReadPixels can align the first pixel in each row at 1-, 2-, 4- and 8-byte boundaries. We
@@ -248,18 +276,20 @@ void Context::show() { glfwShowWindow(instance().glfw_window); }
 
 void Context::hide() { glfwHideWindow(instance().glfw_window); }
 
-glm::ivec2 Context::resolution() {
+glm::ivec2 Context::resolution()
+{
     int w, h;
     glfwGetFramebufferSize(instance().glfw_window, &w, &h);
     return glm::ivec2(w, h);
 }
 
-void Context::resize(int w, int h) {
+void Context::resize(int w, int h)
+{
     glfwSetWindowSize(instance().glfw_window, w, h);
     glViewport(0, 0, w, h);
 }
 
-void Context::set_title(const std::string& name) { glfwSetWindowTitle(instance().glfw_window, name.c_str()); }
+void Context::set_title(const std::string &name) { glfwSetWindowTitle(instance().glfw_window, name.c_str()); }
 
 void Context::set_swap_interval(uint32_t interval) { glfwSwapInterval(interval); }
 
@@ -267,7 +297,8 @@ void Context::capture_mouse(bool on) { glfwSetInputMode(instance().glfw_window, 
 
 void Context::set_attribute(int attribute, bool value) { glfwSetWindowAttrib(instance().glfw_window, attribute, value ? GLFW_TRUE : GLFW_FALSE); }
 
-glm::vec2 Context::mouse_pos() {
+glm::vec2 Context::mouse_pos()
+{
     double xpos, ypos;
     glfwGetCursorPos(instance().glfw_window, &xpos, &ypos);
     return glm::vec2(xpos, ypos);

@@ -3,7 +3,6 @@
 #include "imgui/imgui.h"
 #include <iostream>
 #include <GL/glew.h>
-#include <GL/gl.h>
 #include <GLFW/glfw3.h>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/rotate_vector.hpp>
